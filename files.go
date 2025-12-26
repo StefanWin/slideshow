@@ -23,10 +23,18 @@ func EnsureDir(directory string) error {
 	return nil
 }
 
-func IsImage(filePath string) bool {
+func hasMimeTypePrefix(filePath, prefix string) bool {
 	ext := filepath.Ext(filePath)
 	mimeType := mime.TypeByExtension(ext)
-	return strings.HasPrefix(mimeType, "image/")
+	return strings.HasPrefix(mimeType, prefix)
+}
+
+func IsImage(filePath string) bool {
+	return hasMimeTypePrefix(filePath, "image/")
+}
+
+func IsVideo(filePath string) bool {
+	return hasMimeTypePrefix(filePath, "video/")
 }
 
 func ListFiles(dir string, recursive bool) ([]string, error) {

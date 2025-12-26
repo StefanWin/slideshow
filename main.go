@@ -44,7 +44,7 @@ func generateIntermediateVideo(jobChannel <-chan IntermediateVideoJob, resultCha
 	defer wg.Done()
 
 	for imageFile := range jobChannel {
-		generatedVideo, err := GenerateImageVideo(imageFile.Path, outputDirectory, options)
+		generatedVideo, err := GenerateIntermediateVideo(imageFile.Path, outputDirectory, options)
 		if err != nil {
 			log.Printf("failed to generate video from image %v: %v\n", imageFile, err)
 		}
@@ -77,27 +77,27 @@ func run() error {
 
 	log.Printf("found %d files in %s\n", len(files), options.Directory)
 
-	var imageFiles []string
+	var filesToProcess []string
 
 	for _, file := range files {
-		if IsImage(file) {
-			imageFiles = append(imageFiles, file)
+		if IsImage(file) || IsVideo(file) {
+			filesToProcess = append(filesToProcess, file)
 		}
 	}
 
 	if options.Recursive {
-		log.Printf("found %d image files in %s and subdirectories\n", len(imageFiles), options.Directory)
+		log.Printf("found %d image/video files in %s and subdirectories\n", len(filesToProcess), options.Directory)
 	} else {
-		log.Printf("found %d image files in %s\n", len(imageFiles), options.Directory)
+		log.Printf("found %d image/video files in %s\n", len(filesToProcess), options.Directory)
 	}
 
-	if len(imageFiles) == 0 {
-		return fmt.Errorf("no image files found in %s", options.Directory)
+	if len(filesToProcess) == 0 {
+		return fmt.Errorf("no image/video files found in %s", options.Directory)
 	}
 
 	if options.Randomize {
-		rand.Shuffle(len(imageFiles), func(i, j int) {
-			imageFiles[i], imageFiles[j] = imageFiles[j], imageFiles[i]
+		rand.Shuffle(len(filesToProcess), func(i, j int) {
+			filesToProcess[i], filesToProcess[j] = filesToProcess[j], filesToProcess[i]
 		})
 		log.Printf("randomized order of files")
 	}
@@ -118,21 +118,21 @@ func run() error {
 
 	log.Printf("using %d concurrent workers\n", options.Concurrency)
 
-	intermediateFiles := make([]string, len(imageFiles))
+	intermediateFiles := make([]string, len(filesToProcess))
 
 	log.Printf("generating intermediate videos...\n")
 	start := time.Now()
 
 	var wg sync.WaitGroup
-	jobChannel := make(chan IntermediateVideoJob, len(imageFiles))
-	resultChannel := make(chan IntermediateVideoResult, len(imageFiles))
+	jobChannel := make(chan IntermediateVideoJob, len(filesToProcess))
+	resultChannel := make(chan IntermediateVideoResult, len(filesToProcess))
 
 	for i := 0; i < options.Concurrency; i++ {
 		wg.Add(1)
 		go generateIntermediateVideo(jobChannel, resultChannel, &wg, tmpDir, options)
 	}
 
-	for i, imageFile := range imageFiles {
+	for i, imageFile := range filesToProcess {
 		jobChannel <- IntermediateVideoJob{Path: imageFile, Index: i}
 	}
 
