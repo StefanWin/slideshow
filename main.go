@@ -97,12 +97,12 @@ func run() error {
 		if err != nil {
 			log.Printf("failed to cleanup tmp dir: %v", err)
 		}
+		log.Printf("cleaned up temp directory %s\n", path)
 	}(tmpDir)
 
 	intermediateFiles := make([]string, len(imageFiles))
 
 	for i, imageFile := range imageFiles {
-
 		startTime := time.Now()
 		generatedVideo, err := GenerateImageVideo(imageFile, tmpDir, codec, time.Second*time.Duration(entryDuration), width, height, fps)
 		if err != nil {
