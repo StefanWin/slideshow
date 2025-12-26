@@ -113,9 +113,11 @@ func run() error {
 		intermediateFiles[i] = generatedVideo
 	}
 
+	log.Printf("generated %d intermediate videos\n", len(intermediateFiles))
+
 	dirName := filepath.Base(directory)
 
-	outputPath := fmt.Sprintf("%s-%s.mp4", dirName, GetTimestamp())
+	outputPath := fmt.Sprintf("%s-%s.mkv", dirName, GetTimestamp())
 
 	if err := ConcatVideos(intermediateFiles, outputPath, codec); err != nil {
 		return fmt.Errorf("failed to concat videos: %v", err)
