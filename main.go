@@ -55,7 +55,7 @@ func generateIntermediateVideo(jobChannel <-chan IntermediateVideoJob, resultCha
 	for imageFile := range jobChannel {
 		generatedVideo, err := GenerateImageVideo(imageFile.Path, options.OutputDirectory, options.Codec, options.EntryDuration, options.Width, options.Height, options.FPS)
 		if err != nil {
-			log.Printf("failed to generate video from image %s: %v\n", imageFile, err)
+			log.Printf("failed to generate video from image %v: %v\n", imageFile, err)
 		}
 
 		resultChannel <- IntermediateVideoResult{Path: generatedVideo, Index: imageFile.Index}
@@ -75,6 +75,7 @@ func run() error {
 	var codec string
 	var entryDuration int
 	var randomize bool
+	var recursive bool
 	var concurrency int
 
 	flag.StringVar(&directory, "directory", ".", "directory to scan")
@@ -84,6 +85,7 @@ func run() error {
 	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
+	flag.BoolVar(&recursive, "recursive", false, "recursively scan subdirectories for image files")
 	flag.IntVar(&concurrency, "concurrency", runtime.NumCPU()/2, "number of concurrent workers")
 
 	flag.Parse()
@@ -91,9 +93,10 @@ func run() error {
 	log.Printf("slideshow@%s\n", VERSION)
 	log.Printf("directory: %s\n", directory)
 	log.Printf("%ds per image, randomize order: %t\n", entryDuration, randomize)
+	log.Printf("recursive scanning: %t\n", recursive)
 	log.Printf("output: %dx%d@%d (%s)\n", width, height, fps, codec)
 
-	files, err := ListFiles(directory)
+	files, err := ListFiles(directory, recursive)
 	if err != nil {
 		return err
 	}
@@ -108,7 +111,11 @@ func run() error {
 		}
 	}
 
-	log.Printf("found %d image files in %s\n", len(imageFiles), directory)
+	if recursive {
+		log.Printf("found %d image files in %s and subdirectories\n", len(imageFiles), directory)
+	} else {
+		log.Printf("found %d image files in %s\n", len(imageFiles), directory)
+	}
 
 	if len(imageFiles) == 0 {
 		return fmt.Errorf("no image files found in %s", directory)

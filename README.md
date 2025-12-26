@@ -30,12 +30,13 @@ Run the tool by pointing it to a directory containing images:
 | `-codec`          | `libx264`     | Codec to use to generate the slideshow (and intermediate files). |
 | `-entry-duration` | `5`           | Duration (in seconds) each image is displayed.                   |
 | `-randomize`      | `false`       | Randomize the order of images in the slideshow.                  | 
+| `-recursive`      | `false`       | Recursively scan subdirectories for image files.                 |
 | `-fps`            | `30`          | Frames per second of the output video.                           |
 | `-concurrency `   | `CPU_COUNT/2` | Number of concurrent image processing goroutines.                |
 
 ## How it works
 
-1. **Scan**: The tool scans the specified directory for image files (based on MIME types).
+1. **Scan**: The tool scans the specified directory for image files (based on MIME types). By default, only the top-level directory is scanned; pass `-recursive` to include subdirectories.
 2. **Process**: For each image found, it uses FFmpeg to create a short video clip with the specified duration and resolution.
    - Images are scaled to fit the target resolution while maintaining an aspect ratio, with black padding added if necessary.
    - A silent audio track is added to each clip to ensure smooth concatenation.
@@ -43,4 +44,4 @@ Run the tool by pointing it to a directory containing images:
 4. **Concatenate**: The tool uses FFmpeg's `concat` demuxer to join all clips into a single MP4 file.
 5. **Cleanup**: The temporary directory is removed after the final video is generated.
 
-The output file is named based on the input directory and a timestamp, e.g., `my-photos-2025-12-26_05-05-00.mp4`.
+The output file is named based on the input directory and a timestamp, e.g., `my-photos-2025-12-26_05-05-00.mkv`.

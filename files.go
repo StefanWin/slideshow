@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"mime"
 	"os"
 	"path/filepath"
@@ -28,17 +29,32 @@ func IsImage(filePath string) bool {
 	return strings.HasPrefix(mimeType, "image/")
 }
 
-func ListFiles(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
+func ListFiles(dir string, recursive bool) ([]string, error) {
+	var filePaths []string
+
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path == dir {
+			return nil
+		}
+
+		if d.IsDir() {
+			if !recursive {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		filePaths = append(filePaths, path)
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	var filePaths []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		filePaths = append(filePaths, filepath.Join(dir, entry.Name()))
-	}
+
 	return filePaths, nil
 }
