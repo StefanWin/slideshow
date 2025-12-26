@@ -18,7 +18,7 @@ var (
 func ensureBinaryExists(binary string) error {
 	_, err := exec.LookPath(binary)
 	if err != nil {
-		return fmt.Errorf("%s not found in PATH", binary)
+		return fmt.Errorf("%s not found in $PATH", binary)
 	}
 	return nil
 }
@@ -55,11 +55,8 @@ func run() error {
 
 	log.Printf("slideshow@%s\n", VERSION)
 	log.Printf("directory: %s\n", directory)
-	log.Printf("resolution: %dx%d\n", width, height)
-	log.Printf("entry duration: %d\n", entryDuration)
-	log.Printf("codec: %s\n", codec)
-	log.Printf("randomize: %t\n", randomize)
-	log.Printf("fps: %d\n", fps)
+	log.Printf("%ds per image, randomize order: %t\n", entryDuration, randomize)
+	log.Printf("output: %dx%d@%d (%s)\n", width, height, fps, codec)
 
 	files, err := ListFiles(directory)
 	if err != nil {
