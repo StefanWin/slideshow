@@ -31,4 +31,7 @@ Thumbs.db
 # Media
 *.mkv
 *.jpg
+*.jpeg
 *.mp4
+*.webp
+*.png
