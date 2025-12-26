@@ -30,6 +30,7 @@ Run the tool by pointing it to a directory containing images:
 | `-codec`          | `libx264` | Codec to use to generate the slideshow (and intermediate files). |
 | `-entry-duration` | `5`       | Duration (in seconds) each image is displayed.                   |
 | `-randomize`      | `false`   | Randomize the order of images in the slideshow.                  | 
+| `-fps`            | `30`      | Frames per second of the output video.                           |
 
 ## How it works
 

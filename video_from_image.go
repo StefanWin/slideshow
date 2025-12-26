@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, width, height int) (string, error) {
+func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, width, height, fps int) (string, error) {
 	base := filepath.Base(image)
 	baseWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
 	fn := baseWithoutExt + ".mkv"
@@ -22,9 +22,8 @@ func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, 
 		"-loop", "1",
 		"-i", image,
 		"-avoid_negative_ts", "make_zero",
-		//"-filter:v", "fps=30",
-		"-r", "30",
-		"-frames:v", fmt.Sprintf("%d", int(duration.Seconds()*30)),
+		"-r", fmt.Sprintf("%d", fps),
+		"-frames:v", fmt.Sprintf("%d", int(duration.Seconds()*float64(fps))),
 		"-c:v", codec,
 		"-crf", "20",
 		"-preset", "medium",
@@ -33,7 +32,7 @@ func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, 
 		"-ar", "48000",
 		"-ac", "2",
 		"-shortest",
-		"-g", "30",
+		"-g", fmt.Sprintf("%d", fps),
 		"-keyint_min", "1",
 		"-t", ConvertDurationToTimestamp(duration),
 		"-pix_fmt", "yuv420p",

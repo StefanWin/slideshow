@@ -38,6 +38,7 @@ func run() error {
 	var directory string
 	var width int
 	var height int
+	var fps int
 	var codec string
 	var entryDuration int
 	var randomize bool
@@ -45,6 +46,7 @@ func run() error {
 	flag.StringVar(&directory, "directory", ".", "directory to scan")
 	flag.IntVar(&width, "width", 1920, "width of output video")
 	flag.IntVar(&height, "height", 1080, "height of output video")
+	flag.IntVar(&fps, "fps", 30, "frames per second of output video")
 	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
@@ -56,6 +58,8 @@ func run() error {
 	log.Printf("resolution: %dx%d\n", width, height)
 	log.Printf("entry duration: %d\n", entryDuration)
 	log.Printf("codec: %s\n", codec)
+	log.Printf("randomize: %t\n", randomize)
+	log.Printf("fps: %d\n", fps)
 
 	files, err := ListFiles(directory)
 	if err != nil {
@@ -103,7 +107,7 @@ func run() error {
 	for i, imageFile := range imageFiles {
 		log.Printf("processing image %s (%d/%d)", imageFile, i+1, len(imageFiles))
 
-		generatedVideo, err := GenerateImageVideo(imageFile, tmpDir, codec, time.Second*time.Duration(entryDuration), width, height)
+		generatedVideo, err := GenerateImageVideo(imageFile, tmpDir, codec, time.Second*time.Duration(entryDuration), width, height, fps)
 		if err != nil {
 			return fmt.Errorf("failed to generate video from image %s: %v", imageFile, err)
 		}
