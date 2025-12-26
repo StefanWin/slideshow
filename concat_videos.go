@@ -42,6 +42,7 @@ func ConcatVideos(videoFiles []string, outputPath string, options *SlideshowOpti
 		"-c:v", options.Codec,
 		"-crf", fmt.Sprintf("%d", options.CRF),
 		"-preset", options.Preset,
+		"-tune", "stillimage",
 		"-pix_fmt", "yuv420p",
 		"-c:a", "aac",
 		"-b:a", "128k",
