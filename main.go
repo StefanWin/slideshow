@@ -102,13 +102,14 @@ func run() error {
 	intermediateFiles := make([]string, len(imageFiles))
 
 	for i, imageFile := range imageFiles {
-		log.Printf("processing image %s (%d/%d)", imageFile, i+1, len(imageFiles))
 
+		startTime := time.Now()
 		generatedVideo, err := GenerateImageVideo(imageFile, tmpDir, codec, time.Second*time.Duration(entryDuration), width, height, fps)
 		if err != nil {
 			return fmt.Errorf("failed to generate video from image %s: %v", imageFile, err)
 		}
-
+		elapsed := time.Since(startTime)
+		log.Printf("processed image %s in %dms (%d/%d)", imageFile, elapsed.Milliseconds(), i+1, len(imageFiles))
 		intermediateFiles[i] = generatedVideo
 	}
 
