@@ -33,6 +33,7 @@ Run the tool by pointing it to a directory containing images:
 | `-recursive`      | `false`       | Recursively scan subdirectories for image files.                 |
 | `-fps`            | `30`          | Frames per second of the output video.                           |
 | `-crf`            | `23`          | CRF value for the codec                                          |
+| `-preset`         | `medium`      | Preset for the codec                                             |
 | `-concurrency `   | `CPU_COUNT/2` | Number of concurrent image processing goroutines.                |
 
 ## How it works

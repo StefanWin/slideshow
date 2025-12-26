@@ -11,6 +11,7 @@ type SlideshowOptions struct {
 	Directory     string
 	Width, Height int
 	Codec         string
+	Preset        string
 	FPS           int
 	CRF           int
 	EntryDuration time.Duration
@@ -26,6 +27,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	var fps int
 	var crf int
 	var codec string
+	var preset string
 	var entryDuration int
 	var randomize bool
 	var recursive bool
@@ -36,6 +38,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	flag.IntVar(&height, "height", 1080, "height of output video")
 	flag.IntVar(&fps, "fps", 30, "frames per second of output video")
 	flag.IntVar(&crf, "crf", 23, "constant rate factor for codec")
+	flag.StringVar(&preset, "preset", "medium", "preset to use for codec")
 	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
@@ -67,6 +70,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 		Directory:     directory,
 		Width:         width,
 		Height:        height,
+		Preset:        preset,
 		Codec:         codec,
 		FPS:           fps,
 		CRF:           crf,

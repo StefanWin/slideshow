@@ -25,7 +25,7 @@ func GenerateImageVideo(image, outputDir string, options *SlideshowOptions) (str
 		"-frames:v", fmt.Sprintf("%d", int(options.EntryDuration.Seconds()*float64(options.FPS))),
 		"-c:v", options.Codec,
 		"-crf", fmt.Sprintf("%d", options.CRF),
-		"-preset", "medium",
+		"-preset", options.Preset,
 		"-c:a", "aac",
 		"-b:a", "128k",
 		"-ar", "48000",

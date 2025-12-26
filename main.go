@@ -68,7 +68,7 @@ func run() error {
 	log.Printf("directory: %s\n", options.Directory)
 	log.Printf("%fs per image, randomize order: %t\n", options.EntryDuration.Seconds(), options.Randomize)
 	log.Printf("recursive scanning: %t\n", options.Recursive)
-	log.Printf("output: %dx%d@%d (%s, crf: %d)\n", options.Width, options.Height, options.FPS, options.Codec, options.CRF)
+	log.Printf("output: %dx%d@%d (%s, crf: %d, preset: %s)\n", options.Width, options.Height, options.FPS, options.Codec, options.CRF, options.Preset)
 
 	files, err := ListFiles(options.Directory, options.Recursive)
 	if err != nil {
