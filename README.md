@@ -29,6 +29,7 @@ Run the tool by pointing it to a directory containing images:
 | `-height`         | `1080`    | Height of the output video in pixels.                            |
 | `-codec`          | `libx264` | Codec to use to generate the slideshow (and intermediate files). |
 | `-entry-duration` | `5`       | Duration (in seconds) each image is displayed.                   |
+| `-randomize`      | `false`   | Randomize the order of images in the slideshow.                  | 
 
 ## How it works
 

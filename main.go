@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,12 +40,14 @@ func run() error {
 	var height int
 	var codec string
 	var entryDuration int
+	var randomize bool
 
 	flag.StringVar(&directory, "directory", ".", "directory to scan")
 	flag.IntVar(&width, "width", 1920, "width of output video")
 	flag.IntVar(&height, "height", 1080, "height of output video")
 	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
+	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
 
 	flag.Parse()
 
@@ -52,6 +55,7 @@ func run() error {
 	log.Printf("directory: %s\n", directory)
 	log.Printf("resolution: %dx%d\n", width, height)
 	log.Printf("entry duration: %d\n", entryDuration)
+	log.Printf("codec: %s\n", codec)
 
 	files, err := ListFiles(directory)
 	if err != nil {
@@ -72,6 +76,13 @@ func run() error {
 
 	if len(imageFiles) == 0 {
 		return fmt.Errorf("no image files found in %s", directory)
+	}
+
+	if randomize {
+		rand.Shuffle(len(imageFiles), func(i, j int) {
+			imageFiles[i], imageFiles[j] = imageFiles[j], imageFiles[i]
+		})
+		log.Printf("randomized order of files")
 	}
 
 	tmpDir := ".tmp/"
