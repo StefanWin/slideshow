@@ -1,14 +1,12 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -68,40 +66,23 @@ func run() error {
 		return err
 	}
 
-	var directory string
-	var width int
-	var height int
-	var fps int
-	var codec string
-	var entryDuration int
-	var randomize bool
-	var recursive bool
-	var concurrency int
-
-	flag.StringVar(&directory, "directory", ".", "directory to scan")
-	flag.IntVar(&width, "width", 1920, "width of output video")
-	flag.IntVar(&height, "height", 1080, "height of output video")
-	flag.IntVar(&fps, "fps", 30, "frames per second of output video")
-	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
-	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
-	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
-	flag.BoolVar(&recursive, "recursive", false, "recursively scan subdirectories for image files")
-	flag.IntVar(&concurrency, "concurrency", runtime.NumCPU()/2, "number of concurrent workers")
-
-	flag.Parse()
-
-	log.Printf("slideshow@%s\n", VERSION)
-	log.Printf("directory: %s\n", directory)
-	log.Printf("%ds per image, randomize order: %t\n", entryDuration, randomize)
-	log.Printf("recursive scanning: %t\n", recursive)
-	log.Printf("output: %dx%d@%d (%s)\n", width, height, fps, codec)
-
-	files, err := ListFiles(directory, recursive)
+	options, err := parseSlideshowOptions()
 	if err != nil {
 		return err
 	}
 
-	log.Printf("found %d files in %s\n", len(files), directory)
+	log.Printf("slideshow@%s\n", VERSION)
+	log.Printf("directory: %s\n", options.Directory)
+	log.Printf("%ds per image, randomize order: %t\n", options.EntryDuration, options.Randomize)
+	log.Printf("recursive scanning: %t\n", options.Recursive)
+	log.Printf("output: %dx%d@%d (%s)\n", options.Width, options.Height, options.FPS, options.Codec)
+
+	files, err := ListFiles(options.Directory, options.Recursive)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("found %d files in %s\n", len(files), options.Directory)
 
 	var imageFiles []string
 
@@ -111,17 +92,17 @@ func run() error {
 		}
 	}
 
-	if recursive {
-		log.Printf("found %d image files in %s and subdirectories\n", len(imageFiles), directory)
+	if options.Recursive {
+		log.Printf("found %d image files in %s and subdirectories\n", len(imageFiles), options.Directory)
 	} else {
-		log.Printf("found %d image files in %s\n", len(imageFiles), directory)
+		log.Printf("found %d image files in %s\n", len(imageFiles), options.Directory)
 	}
 
 	if len(imageFiles) == 0 {
-		return fmt.Errorf("no image files found in %s", directory)
+		return fmt.Errorf("no image files found in %s", options.Directory)
 	}
 
-	if randomize {
+	if options.Randomize {
 		rand.Shuffle(len(imageFiles), func(i, j int) {
 			imageFiles[i], imageFiles[j] = imageFiles[j], imageFiles[i]
 		})
@@ -142,7 +123,7 @@ func run() error {
 		log.Printf("cleaned up temp directory %s\n", path)
 	}(tmpDir)
 
-	log.Printf("using %d concurrent workers\n", concurrency)
+	log.Printf("using %d concurrent workers\n", options.Concurrency)
 
 	intermediateFiles := make([]string, len(imageFiles))
 
@@ -153,15 +134,15 @@ func run() error {
 	jobChannel := make(chan IntermediateVideoJob, len(imageFiles))
 	resultChannel := make(chan IntermediateVideoResult, len(imageFiles))
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < options.Concurrency; i++ {
 		wg.Add(1)
 		go generateIntermediateVideo(jobChannel, resultChannel, &wg, &IntermediateVideoOptions{
 			OutputDirectory: tmpDir,
-			Codec:           codec,
-			EntryDuration:   time.Second * time.Duration(entryDuration),
-			Width:           width,
-			Height:          height,
-			FPS:             fps,
+			Codec:           options.Codec,
+			EntryDuration:   time.Second * time.Duration(options.EntryDuration),
+			Width:           options.Width,
+			Height:          options.Height,
+			FPS:             options.FPS,
 		})
 	}
 
@@ -185,13 +166,13 @@ func run() error {
 	elapsed := time.Since(start)
 	log.Printf("generated %d intermediate videos in %dms\n", len(intermediateFiles), elapsed.Milliseconds())
 
-	dirName := filepath.Base(directory)
+	dirName := filepath.Base(options.Directory)
 
 	outputPath := fmt.Sprintf("%s-%s.mkv", dirName, GetTimestamp())
 
 	log.Printf("concatenating intermediate videos...\n")
 	startTime := time.Now()
-	if err := ConcatVideos(intermediateFiles, outputPath, codec); err != nil {
+	if err := ConcatVideos(intermediateFiles, outputPath, options.Codec); err != nil {
 		return fmt.Errorf("failed to concat videos: %v", err)
 	}
 	elapsed = time.Since(startTime)
