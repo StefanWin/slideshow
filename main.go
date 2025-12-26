@@ -150,7 +150,7 @@ func run() error {
 	}
 
 	elapsed := time.Since(start)
-	log.Printf("generated %d intermediate videos in %dms\n", len(intermediateFiles), elapsed.Milliseconds())
+	log.Printf("generated %d intermediate videos in %s\n", len(intermediateFiles), elapsed)
 
 	dirName := filepath.Base(options.Directory)
 
@@ -163,6 +163,6 @@ func run() error {
 	}
 	elapsed = time.Since(startTime)
 
-	log.Printf("output video written to %s in %dms", outputPath, elapsed.Milliseconds())
+	log.Printf("output video written to %s in %s", outputPath, elapsed)
 	return nil
 }
