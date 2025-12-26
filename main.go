@@ -29,13 +29,6 @@ func main() {
 	}
 }
 
-type IntermediateVideoOptions struct {
-	OutputDirectory    string
-	Codec              string
-	EntryDuration      time.Duration
-	Width, Height, FPS int
-}
-
 type IntermediateVideoJob struct {
 	Path  string
 	Index int
@@ -46,12 +39,12 @@ type IntermediateVideoResult struct {
 	Index int
 }
 
-func generateIntermediateVideo(jobChannel <-chan IntermediateVideoJob, resultChannel chan<- IntermediateVideoResult, wg *sync.WaitGroup, options *IntermediateVideoOptions) {
+func generateIntermediateVideo(jobChannel <-chan IntermediateVideoJob, resultChannel chan<- IntermediateVideoResult, wg *sync.WaitGroup, outputDirectory string, options *SlideshowOptions) {
 
 	defer wg.Done()
 
 	for imageFile := range jobChannel {
-		generatedVideo, err := GenerateImageVideo(imageFile.Path, options.OutputDirectory, options.Codec, options.EntryDuration, options.Width, options.Height, options.FPS)
+		generatedVideo, err := GenerateImageVideo(imageFile.Path, outputDirectory, options)
 		if err != nil {
 			log.Printf("failed to generate video from image %v: %v\n", imageFile, err)
 		}
@@ -136,14 +129,7 @@ func run() error {
 
 	for i := 0; i < options.Concurrency; i++ {
 		wg.Add(1)
-		go generateIntermediateVideo(jobChannel, resultChannel, &wg, &IntermediateVideoOptions{
-			OutputDirectory: tmpDir,
-			Codec:           options.Codec,
-			EntryDuration:   time.Second * time.Duration(options.EntryDuration),
-			Width:           options.Width,
-			Height:          options.Height,
-			FPS:             options.FPS,
-		})
+		go generateIntermediateVideo(jobChannel, resultChannel, &wg, tmpDir, options)
 	}
 
 	for i, imageFile := range imageFiles {
@@ -172,7 +158,7 @@ func run() error {
 
 	log.Printf("concatenating intermediate videos...\n")
 	startTime := time.Now()
-	if err := ConcatVideos(intermediateFiles, outputPath, options.Codec); err != nil {
+	if err := ConcatVideos(intermediateFiles, outputPath, options); err != nil {
 		return fmt.Errorf("failed to concat videos: %v", err)
 	}
 	elapsed = time.Since(startTime)

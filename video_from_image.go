@@ -5,10 +5,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
-func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, width, height, fps int) (string, error) {
+func GenerateImageVideo(image, outputDir string, options *SlideshowOptions) (string, error) {
 	base := filepath.Base(image)
 	baseWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
 	fn := baseWithoutExt + ".mkv"
@@ -22,9 +21,9 @@ func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, 
 		"-loop", "1",
 		"-i", image,
 		"-avoid_negative_ts", "make_zero",
-		"-r", fmt.Sprintf("%d", fps),
-		"-frames:v", fmt.Sprintf("%d", int(duration.Seconds()*float64(fps))),
-		"-c:v", codec,
+		"-r", fmt.Sprintf("%d", options.FPS),
+		"-frames:v", fmt.Sprintf("%d", int(options.EntryDuration.Seconds()*float64(options.FPS))),
+		"-c:v", options.Codec,
 		"-crf", "20",
 		"-preset", "medium",
 		"-c:a", "aac",
@@ -32,16 +31,16 @@ func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, 
 		"-ar", "48000",
 		"-ac", "2",
 		"-shortest",
-		"-g", fmt.Sprintf("%d", fps),
+		"-g", fmt.Sprintf("%d", options.FPS),
 		"-keyint_min", "1",
-		"-t", ConvertDurationToTimestamp(duration),
+		"-t", ConvertDurationToTimestamp(options.EntryDuration),
 		"-pix_fmt", "yuv420p",
 		"-vf", fmt.Sprintf(
 			"scale=%d:%d:force_original_aspect_ratio=decrease:eval=frame,pad=%d:%d:-1:-1:color=black,setsar=1",
-			width,
-			height,
-			width,
-			height,
+			options.Width,
+			options.Height,
+			options.Width,
+			options.Height,
 		),
 		fp,
 		"-y",

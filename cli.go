@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
+	"time"
 )
 
 type SlideshowOptions struct {
@@ -11,7 +12,7 @@ type SlideshowOptions struct {
 	Width, Height int
 	Codec         string
 	FPS           int
-	EntryDuration int
+	EntryDuration time.Duration
 	Randomize     bool
 	Recursive     bool
 	Concurrency   int
@@ -62,7 +63,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 		Height:        height,
 		Codec:         codec,
 		FPS:           fps,
-		EntryDuration: entryDuration,
+		EntryDuration: time.Duration(entryDuration) * time.Second,
 		Randomize:     randomize,
 		Recursive:     recursive,
 		Concurrency:   concurrency,

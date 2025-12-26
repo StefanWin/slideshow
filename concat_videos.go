@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func ConcatVideos(videoFiles []string, outputPath string, codec string) error {
+func ConcatVideos(videoFiles []string, outputPath string, options *SlideshowOptions) error {
 
 	// Create a temporary file list for ffmpeg
 	tempList, err := os.CreateTemp("", "ffmpeg_filelist_*.txt")
@@ -39,7 +39,7 @@ func ConcatVideos(videoFiles []string, outputPath string, codec string) error {
 		"-f", "concat",
 		"-safe", "0",
 		"-i", tempList.Name(),
-		"-c:v", codec,
+		"-c:v", options.Codec,
 		"-crf", "23",
 		"-preset", "slow",
 		"-pix_fmt", "yuv420p",
