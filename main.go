@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-const (
-	VERSION = "0.0.2"
+var (
+	VERSION = "dev"
 )
 
 func ensureBinaryExists(binary string) error {
