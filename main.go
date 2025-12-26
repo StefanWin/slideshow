@@ -30,10 +30,6 @@ func main() {
 
 func run() error {
 
-	if err := ensureBinaryExists("ffprobe"); err != nil {
-		return err
-	}
-
 	if err := ensureBinaryExists("ffmpeg"); err != nil {
 		return err
 	}

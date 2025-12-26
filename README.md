@@ -4,7 +4,7 @@ A simple CLI tool to generate a slideshow video from a directory of images using
 
 ## Prerequisites
 
-This tool requires `ffmpeg` and `ffprobe` to be installed and available in your `PATH`.
+This tool requires `ffmpeg` to be installed and available in your `PATH`.
 
 ## Installation
 
