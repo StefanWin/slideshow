@@ -12,6 +12,7 @@ type SlideshowOptions struct {
 	Width, Height int
 	Codec         string
 	FPS           int
+	CRF           int
 	EntryDuration time.Duration
 	Randomize     bool
 	Recursive     bool
@@ -23,6 +24,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	var width int
 	var height int
 	var fps int
+	var crf int
 	var codec string
 	var entryDuration int
 	var randomize bool
@@ -33,6 +35,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	flag.IntVar(&width, "width", 1920, "width of output video")
 	flag.IntVar(&height, "height", 1080, "height of output video")
 	flag.IntVar(&fps, "fps", 30, "frames per second of output video")
+	flag.IntVar(&crf, "crf", 23, "constant rate factor for codec")
 	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
@@ -50,6 +53,9 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	if fps <= 0 {
 		return nil, fmt.Errorf("fps must be greater than 0")
 	}
+	if crf <= 0 {
+		return nil, fmt.Errorf("crf must be greater than 0")
+	}
 	if concurrency <= 0 {
 		return nil, fmt.Errorf("concurrency must be greater than 0")
 	}
@@ -63,6 +69,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 		Height:        height,
 		Codec:         codec,
 		FPS:           fps,
+		CRF:           crf,
 		EntryDuration: time.Duration(entryDuration) * time.Second,
 		Randomize:     randomize,
 		Recursive:     recursive,
