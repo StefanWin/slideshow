@@ -22,15 +22,16 @@ Run the tool by pointing it to a directory containing images:
 
 ### Options
 
-| Option            | Default   | Description                                                      |
-|-------------------|-----------|------------------------------------------------------------------|
-| `-directory`      | `.`       | The directory to scan for image files.                           |
-| `-width`          | `1920`    | Width of the output video in pixels.                             |
-| `-height`         | `1080`    | Height of the output video in pixels.                            |
-| `-codec`          | `libx264` | Codec to use to generate the slideshow (and intermediate files). |
-| `-entry-duration` | `5`       | Duration (in seconds) each image is displayed.                   |
-| `-randomize`      | `false`   | Randomize the order of images in the slideshow.                  | 
-| `-fps`            | `30`      | Frames per second of the output video.                           |
+| Option            | Default       | Description                                                      |
+|-------------------|---------------|------------------------------------------------------------------|
+| `-directory`      | `.`           | The directory to scan for image files.                           |
+| `-width`          | `1920`        | Width of the output video in pixels.                             |
+| `-height`         | `1080`        | Height of the output video in pixels.                            |
+| `-codec`          | `libx264`     | Codec to use to generate the slideshow (and intermediate files). |
+| `-entry-duration` | `5`           | Duration (in seconds) each image is displayed.                   |
+| `-randomize`      | `false`       | Randomize the order of images in the slideshow.                  | 
+| `-fps`            | `30`          | Frames per second of the output video.                           |
+| `-concurrency `   | `CPU_COUNT/2` | Number of concurrent image processing goroutines.                |
 
 ## How it works
 
