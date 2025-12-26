@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	VERSION = "0.0.1"
+	VERSION = "0.0.2"
 )
 
 func ensureBinaryExists(binary string) error {
@@ -37,11 +37,13 @@ func run() error {
 	var directory string
 	var width int
 	var height int
+	var codec string
 	var entryDuration int
 
 	flag.StringVar(&directory, "directory", ".", "directory to scan")
 	flag.IntVar(&width, "width", 1920, "width of output video")
 	flag.IntVar(&height, "height", 1080, "height of output video")
+	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 
 	flag.Parse()
@@ -90,7 +92,7 @@ func run() error {
 	for i, imageFile := range imageFiles {
 		log.Printf("processing image %s (%d/%d)", imageFile, i+1, len(imageFiles))
 
-		generatedVideo, err := GenerateImageVideo(imageFile, tmpDir, time.Second*time.Duration(entryDuration), width, height)
+		generatedVideo, err := GenerateImageVideo(imageFile, tmpDir, codec, time.Second*time.Duration(entryDuration), width, height)
 		if err != nil {
 			return fmt.Errorf("failed to generate video from image %s: %v", imageFile, err)
 		}
@@ -102,7 +104,7 @@ func run() error {
 
 	outputPath := fmt.Sprintf("%s-%s.mp4", dirName, GetTimestamp())
 
-	if err := ConcatVideos(intermediateFiles, outputPath); err != nil {
+	if err := ConcatVideos(intermediateFiles, outputPath, codec); err != nil {
 		return fmt.Errorf("failed to concat videos: %v", err)
 	}
 

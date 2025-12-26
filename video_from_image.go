@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GenerateImageVideo(image, outputDir string, duration time.Duration, width, height int) (string, error) {
+func GenerateImageVideo(image, outputDir, codec string, duration time.Duration, width, height int) (string, error) {
 	base := filepath.Base(image)
 	baseWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
 	fn := baseWithoutExt + ".mkv"
@@ -25,7 +25,7 @@ func GenerateImageVideo(image, outputDir string, duration time.Duration, width, 
 		//"-filter:v", "fps=30",
 		"-r", "30",
 		"-frames:v", fmt.Sprintf("%d", int(duration.Seconds()*30)),
-		"-c:v", "libx264",
+		"-c:v", codec,
 		"-crf", "20",
 		"-preset", "medium",
 		"-c:a", "aac",

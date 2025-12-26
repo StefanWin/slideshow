@@ -22,12 +22,13 @@ Run the tool by pointing it to a directory containing images:
 
 ### Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `-directory` | `.` | The directory to scan for image files. |
-| `-width` | `1920` | Width of the output video in pixels. |
-| `-height` | `1080` | Height of the output video in pixels. |
-| `-entry-duration` | `5` | Duration (in seconds) each image is displayed. |
+| Option            | Default   | Description                                                      |
+|-------------------|-----------|------------------------------------------------------------------|
+| `-directory`      | `.`       | The directory to scan for image files.                           |
+| `-width`          | `1920`    | Width of the output video in pixels.                             |
+| `-height`         | `1080`    | Height of the output video in pixels.                            |
+| `-codec`          | `libx264` | Codec to use to generate the slideshow (and intermediate files). |
+| `-entry-duration` | `5`       | Duration (in seconds) each image is displayed.                   |
 
 ## How it works
 
