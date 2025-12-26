@@ -119,10 +119,12 @@ func run() error {
 
 	outputPath := fmt.Sprintf("%s-%s.mkv", dirName, GetTimestamp())
 
+	startTime := time.Now()
 	if err := ConcatVideos(intermediateFiles, outputPath, codec); err != nil {
 		return fmt.Errorf("failed to concat videos: %v", err)
 	}
+	elapsed := time.Since(startTime)
 
-	log.Printf("output video written to %s", outputPath)
+	log.Printf("output video written to %s in %dms", outputPath, elapsed.Milliseconds())
 	return nil
 }
