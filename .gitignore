@@ -22,7 +22,13 @@ vendor/
 
 # JetBrains IDEs
 .idea/
+.run/
 
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Media
+*.mkv
+*.jpg
+*.mp4
