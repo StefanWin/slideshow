@@ -9,6 +9,15 @@ import (
 
 const silentAudioSource = "anullsrc=channel_layout=stereo:sample_rate=48000"
 
+// All clips share the same audio format, pixel format, frame rate and resolution so the
+// concat step can join them without re-encoding.
+var audioEncoderArgs = []string{
+	"-c:a", "aac",
+	"-b:a", "128k",
+	"-ar", "48000",
+	"-ac", "2",
+}
+
 func scaleAndPadFilter(options *SlideshowOptions) string {
 	return fmt.Sprintf(
 		"scale=%d:%d:force_original_aspect_ratio=decrease:eval=frame,pad=%d:%d:-1:-1:color=black,setsar=1",
@@ -20,7 +29,7 @@ func scaleAndPadFilter(options *SlideshowOptions) string {
 }
 
 func getImageOptions(file string, options *SlideshowOptions) []string {
-	return []string{
+	args := []string{
 		"-hide_banner",
 		// with -loop 1 an undecodable image makes ffmpeg retry forever; fail instead
 		"-xerror",
@@ -28,25 +37,19 @@ func getImageOptions(file string, options *SlideshowOptions) []string {
 		"-i", silentAudioSource,
 		"-loop", "1",
 		"-i", file,
-		"-avoid_negative_ts", "make_zero",
 		"-r", fmt.Sprintf("%d", options.FPS),
 		"-frames:v", fmt.Sprintf("%d", int(options.EntryDuration.Seconds()*float64(options.FPS))),
-		"-c:v", options.Codec,
-		"-crf", fmt.Sprintf("%d", options.CRF),
-		"-preset", options.Preset,
-		"-tune", "stillimage",
-		"-movflags", "+faststart",
-		"-c:a", "aac",
-		"-b:a", "128k",
-		"-ar", "48000",
-		"-ac", "2",
+	}
+	args = append(args, videoEncoderArgs(options, imageClip)...)
+	args = append(args, audioEncoderArgs...)
+	return append(args,
 		"-shortest",
 		"-g", fmt.Sprintf("%d", options.FPS),
 		"-keyint_min", "1",
 		"-t", ConvertDurationToTimestamp(options.EntryDuration),
 		"-pix_fmt", "yuv420p",
 		"-vf", scaleAndPadFilter(options),
-	}
+	)
 }
 
 // hasAudioStream reports whether ffmpeg finds at least one audio stream in file.
@@ -74,17 +77,10 @@ func getVideoOptions(file string, options *SlideshowOptions) []string {
 		)
 	}
 
+	args = append(args, "-r", fmt.Sprintf("%d", options.FPS))
+	args = append(args, videoEncoderArgs(options, videoClip)...)
+	args = append(args, audioEncoderArgs...)
 	return append(args,
-		"-r", fmt.Sprintf("%d", options.FPS),
-		"-c:v", options.Codec,
-		"-crf", fmt.Sprintf("%d", options.CRF),
-		"-preset", options.Preset,
-		"-tune", "film",
-		"-movflags", "+faststart",
-		"-c:a", "aac",
-		"-b:a", "128k",
-		"-ar", "48000",
-		"-ac", "2",
 		"-pix_fmt", "yuv420p",
 		"-vf", scaleAndPadFilter(options),
 	)
