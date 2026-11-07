@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,30 +37,27 @@ type IntermediateVideoJob struct {
 type IntermediateVideoResult struct {
 	Path  string
 	Index int
+	Err   error
 }
 
 func generateIntermediateVideo(jobChannel <-chan IntermediateVideoJob, resultChannel chan<- IntermediateVideoResult, wg *sync.WaitGroup, outputDirectory string, options *SlideshowOptions) {
 
 	defer wg.Done()
 
-	for imageFile := range jobChannel {
-		generatedVideo, err := GenerateIntermediateVideo(imageFile.Path, outputDirectory, options)
-		if err != nil {
-			log.Printf("failed to generate video from image %v: %v\n", imageFile, err)
-		}
-
-		resultChannel <- IntermediateVideoResult{Path: generatedVideo, Index: imageFile.Index}
+	for job := range jobChannel {
+		generatedVideo, err := GenerateIntermediateVideo(job.Path, outputDirectory, job.Index, options)
+		resultChannel <- IntermediateVideoResult{Path: generatedVideo, Index: job.Index, Err: err}
 	}
 }
 
 func run() error {
 
-	if err := ensureBinaryExists("ffmpeg"); err != nil {
+	options, err := parseSlideshowOptions()
+	if err != nil {
 		return err
 	}
 
-	options, err := parseSlideshowOptions()
-	if err != nil {
+	if err := ensureBinaryExists("ffmpeg"); err != nil {
 		return err
 	}
 
@@ -102,23 +99,22 @@ func run() error {
 		log.Printf("randomized order of files")
 	}
 
-	tmpDir := ".tmp/"
-
-	if err := EnsureDir(tmpDir); err != nil {
+	tmpDir, err := os.MkdirTemp("", "slideshow-*")
+	if err != nil {
 		return fmt.Errorf("failed to create tmp dir: %v", err)
 	}
 
 	defer func(path string) {
-		err := os.RemoveAll(path)
-		if err != nil {
+		if err := os.RemoveAll(path); err != nil {
 			log.Printf("failed to cleanup tmp dir: %v", err)
+			return
 		}
 		log.Printf("cleaned up temp directory %s\n", path)
 	}(tmpDir)
 
 	log.Printf("using %d concurrent workers\n", options.Concurrency)
 
-	intermediateFiles := make([]string, len(filesToProcess))
+	results := make([]IntermediateVideoResult, len(filesToProcess))
 
 	log.Printf("generating intermediate videos...\n")
 	start := time.Now()
@@ -132,8 +128,8 @@ func run() error {
 		go generateIntermediateVideo(jobChannel, resultChannel, &wg, tmpDir, options)
 	}
 
-	for i, imageFile := range filesToProcess {
-		jobChannel <- IntermediateVideoJob{Path: imageFile, Index: i}
+	for i, file := range filesToProcess {
+		jobChannel <- IntermediateVideoJob{Path: file, Index: i}
 	}
 
 	close(jobChannel)
@@ -143,16 +139,32 @@ func run() error {
 		close(resultChannel)
 	}()
 
-	i := 0
 	for result := range resultChannel {
-		intermediateFiles[result.Index] = result.Path
-		i++
+		results[result.Index] = result
+	}
+
+	// keep the original order and skip clips that failed, so one bad file doesn't abort the run
+	var intermediateFiles []string
+	for i, result := range results {
+		if result.Err != nil {
+			log.Printf("skipping %s: %v\n", filesToProcess[i], result.Err)
+			continue
+		}
+		intermediateFiles = append(intermediateFiles, result.Path)
 	}
 
 	elapsed := time.Since(start)
-	log.Printf("generated %d intermediate videos in %s\n", len(intermediateFiles), elapsed)
+	log.Printf("generated %d of %d intermediate videos in %s\n", len(intermediateFiles), len(filesToProcess), elapsed)
 
-	dirName := filepath.Base(options.Directory)
+	if len(intermediateFiles) == 0 {
+		return fmt.Errorf("failed to generate any intermediate videos")
+	}
+
+	absDirectory, err := filepath.Abs(options.Directory)
+	if err != nil {
+		return err
+	}
+	dirName := filepath.Base(absDirectory)
 
 	outputPath := fmt.Sprintf("%s-%s.mkv", dirName, GetTimestamp())
 

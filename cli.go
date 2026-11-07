@@ -43,7 +43,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
 	flag.BoolVar(&recursive, "recursive", false, "recursively scan subdirectories for image files")
-	flag.IntVar(&concurrency, "concurrency", runtime.NumCPU()/2, "number of concurrent workers")
+	flag.IntVar(&concurrency, "concurrency", max(1, runtime.NumCPU()/2), "number of concurrent workers")
 
 	flag.Parse()
 
@@ -56,8 +56,8 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	if fps <= 0 {
 		return nil, fmt.Errorf("fps must be greater than 0")
 	}
-	if crf <= 0 {
-		return nil, fmt.Errorf("crf must be greater than 0")
+	if crf < 0 {
+		return nil, fmt.Errorf("crf must not be negative")
 	}
 	if concurrency <= 0 {
 		return nil, fmt.Errorf("concurrency must be greater than 0")

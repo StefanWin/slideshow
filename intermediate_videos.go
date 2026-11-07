@@ -7,11 +7,25 @@ import (
 	"strings"
 )
 
+const silentAudioSource = "anullsrc=channel_layout=stereo:sample_rate=48000"
+
+func scaleAndPadFilter(options *SlideshowOptions) string {
+	return fmt.Sprintf(
+		"scale=%d:%d:force_original_aspect_ratio=decrease:eval=frame,pad=%d:%d:-1:-1:color=black,setsar=1",
+		options.Width,
+		options.Height,
+		options.Width,
+		options.Height,
+	)
+}
+
 func getImageOptions(file string, options *SlideshowOptions) []string {
 	return []string{
 		"-hide_banner",
+		// with -loop 1 an undecodable image makes ffmpeg retry forever; fail instead
+		"-xerror",
 		"-f", "lavfi",
-		"-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+		"-i", silentAudioSource,
 		"-loop", "1",
 		"-i", file,
 		"-avoid_negative_ts", "make_zero",
@@ -31,20 +45,37 @@ func getImageOptions(file string, options *SlideshowOptions) []string {
 		"-keyint_min", "1",
 		"-t", ConvertDurationToTimestamp(options.EntryDuration),
 		"-pix_fmt", "yuv420p",
-		"-vf", fmt.Sprintf(
-			"scale=%d:%d:force_original_aspect_ratio=decrease:eval=frame,pad=%d:%d:-1:-1:color=black,setsar=1",
-			options.Width,
-			options.Height,
-			options.Width,
-			options.Height,
-		),
+		"-vf", scaleAndPadFilter(options),
 	}
 }
 
+// hasAudioStream reports whether ffmpeg finds at least one audio stream in file.
+func hasAudioStream(file string) bool {
+	cmd := exec.Command("ffmpeg", "-v", "error", "-i", file, "-map", "0:a:0", "-t", "0", "-f", "null", "-")
+	return cmd.Run() == nil
+}
+
 func getVideoOptions(file string, options *SlideshowOptions) []string {
-	return []string{
+	args := []string{
 		"-hide_banner",
 		"-i", file,
+	}
+
+	// Every clip needs exactly one video and one audio stream for the concat demuxer
+	// to line them up, so videos without audio get a silent track.
+	if hasAudioStream(file) {
+		args = append(args, "-map", "0:v:0", "-map", "0:a:0")
+	} else {
+		args = append(args,
+			"-f", "lavfi",
+			"-i", silentAudioSource,
+			"-map", "0:v:0", "-map", "1:a:0",
+			"-shortest",
+		)
+	}
+
+	return append(args,
+		"-r", fmt.Sprintf("%d", options.FPS),
 		"-c:v", options.Codec,
 		"-crf", fmt.Sprintf("%d", options.CRF),
 		"-preset", options.Preset,
@@ -55,20 +86,16 @@ func getVideoOptions(file string, options *SlideshowOptions) []string {
 		"-ar", "48000",
 		"-ac", "2",
 		"-pix_fmt", "yuv420p",
-		"-vf", fmt.Sprintf(
-			"scale=%d:%d:force_original_aspect_ratio=decrease:eval=frame,pad=%d:%d:-1:-1:color=black,setsar=1",
-			options.Width,
-			options.Height,
-			options.Width,
-			options.Height,
-		),
-	}
+		"-vf", scaleAndPadFilter(options),
+	)
 }
 
-func GenerateIntermediateVideo(file, outputDir string, options *SlideshowOptions) (string, error) {
+// GenerateIntermediateVideo encodes file into a clip in outputDir. The index prefix keeps
+// clip names unique when inputs share a base name (e.g. a/1.jpg and b/1.jpg, or 1.jpg and 1.png).
+func GenerateIntermediateVideo(file, outputDir string, index int, options *SlideshowOptions) (string, error) {
 	base := filepath.Base(file)
 	baseWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
-	fn := baseWithoutExt + ".mkv"
+	fn := fmt.Sprintf("%05d-%s.mkv", index, baseWithoutExt)
 	fp := filepath.Join(outputDir, fn)
 
 	var args []string
