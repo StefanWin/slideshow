@@ -65,7 +65,13 @@ func run() error {
 	log.Printf("directory: %s\n", options.Directory)
 	log.Printf("%fs per image, randomize order: %t\n", options.EntryDuration.Seconds(), options.Randomize)
 	log.Printf("recursive scanning: %t\n", options.Recursive)
-	log.Printf("output: %dx%d@%d (%s, crf: %d, preset: %s)\n", options.Width, options.Height, options.FPS, options.Codec, options.CRF, options.Preset)
+	log.Printf("output: %dx%d@%d (%s)\n", options.Width, options.Height, options.FPS, describeEncoder(options))
+
+	absDirectory, err := filepath.Abs(options.Directory)
+	if err != nil {
+		return err
+	}
+	dirName := filepath.Base(absDirectory)
 
 	files, err := ListFiles(options.Directory, options.Recursive)
 	if err != nil {
@@ -77,6 +83,10 @@ func run() error {
 	var filesToProcess []string
 
 	for _, file := range files {
+		if IsPreviousOutput(file, dirName) {
+			log.Printf("skipping earlier slideshow output %s\n", file)
+			continue
+		}
 		if IsImage(file) || IsVideo(file) {
 			filesToProcess = append(filesToProcess, file)
 		}
@@ -160,17 +170,11 @@ func run() error {
 		return fmt.Errorf("failed to generate any intermediate videos")
 	}
 
-	absDirectory, err := filepath.Abs(options.Directory)
-	if err != nil {
-		return err
-	}
-	dirName := filepath.Base(absDirectory)
-
-	outputPath := fmt.Sprintf("%s-%s.mkv", dirName, GetTimestamp())
+	outputPath := OutputFileName(dirName, GetTimestamp())
 
 	log.Printf("concatenating intermediate videos...\n")
 	startTime := time.Now()
-	if err := ConcatVideos(intermediateFiles, outputPath, options); err != nil {
+	if err := ConcatVideos(intermediateFiles, outputPath); err != nil {
 		return fmt.Errorf("failed to concat videos: %v", err)
 	}
 	elapsed = time.Since(startTime)

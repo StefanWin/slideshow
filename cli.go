@@ -37,12 +37,12 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	flag.IntVar(&width, "width", 1920, "width of output video")
 	flag.IntVar(&height, "height", 1080, "height of output video")
 	flag.IntVar(&fps, "fps", 30, "frames per second of output video")
-	flag.IntVar(&crf, "crf", 23, "constant rate factor for codec")
-	flag.StringVar(&preset, "preset", "medium", "preset to use for codec")
-	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video")
+	flag.IntVar(&crf, "crf", crfUnset, "constant rate factor for codec (default: the codec's default)")
+	flag.StringVar(&preset, "preset", "", "preset to use for codec (default: the codec's default)")
+	flag.StringVar(&codec, "codec", "libx264", "codec to use for output video ("+supportedCodecs()+", or any other ffmpeg encoder with its defaults)")
 	flag.IntVar(&entryDuration, "entry-duration", 5, "duration of each entry in seconds")
 	flag.BoolVar(&randomize, "randomize", false, "randomize order of files")
-	flag.BoolVar(&recursive, "recursive", false, "recursively scan subdirectories for image files")
+	flag.BoolVar(&recursive, "recursive", false, "recursively scan subdirectories for image and video files")
 	flag.IntVar(&concurrency, "concurrency", max(1, runtime.NumCPU()/2), "number of concurrent workers")
 
 	flag.Parse()
@@ -56,9 +56,6 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 	if fps <= 0 {
 		return nil, fmt.Errorf("fps must be greater than 0")
 	}
-	if crf < 0 {
-		return nil, fmt.Errorf("crf must not be negative")
-	}
 	if concurrency <= 0 {
 		return nil, fmt.Errorf("concurrency must be greater than 0")
 	}
@@ -66,7 +63,7 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 		return nil, fmt.Errorf("entry-duration must be greater than 0")
 	}
 
-	return &SlideshowOptions{
+	options := &SlideshowOptions{
 		Directory:     directory,
 		Width:         width,
 		Height:        height,
@@ -78,5 +75,11 @@ func parseSlideshowOptions() (*SlideshowOptions, error) {
 		Randomize:     randomize,
 		Recursive:     recursive,
 		Concurrency:   concurrency,
-	}, nil
+	}
+
+	if err := resolveEncoderOptions(options); err != nil {
+		return nil, err
+	}
+
+	return options, nil
 }

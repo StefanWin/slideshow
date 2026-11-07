@@ -9,7 +9,10 @@ import (
 	"strings"
 )
 
-func ConcatVideos(videoFiles []string, outputPath string, options *SlideshowOptions) error {
+// ConcatVideos joins the intermediate clips without re-encoding them. This relies on every
+// clip having been encoded with the same codec settings, frame rate, resolution, pixel
+// format and audio format (see GenerateIntermediateVideo).
+func ConcatVideos(videoFiles []string, outputPath string) error {
 
 	// Create a temporary file list for ffmpeg
 	tempList, err := os.CreateTemp("", "ffmpeg_filelist_*.txt")
@@ -44,16 +47,7 @@ func ConcatVideos(videoFiles []string, outputPath string, options *SlideshowOpti
 		"-f", "concat",
 		"-safe", "0",
 		"-i", tempList.Name(),
-		"-c:v", options.Codec,
-		"-crf", fmt.Sprintf("%d", options.CRF),
-		"-preset", options.Preset,
-		"-tune", "stillimage",
-		"-movflags", "+faststart",
-		"-pix_fmt", "yuv420p",
-		"-c:a", "aac",
-		"-b:a", "128k",
-		"-ar", "48000",
-		"-ac", "2",
+		"-c", "copy",
 		outputPath,
 		"-y",
 	}

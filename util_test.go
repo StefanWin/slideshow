@@ -63,3 +63,25 @@ func TestConvertDurationToTimestamp(t *testing.T) {
 		})
 	}
 }
+
+func TestIsPreviousOutput(t *testing.T) {
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{path: OutputFileName("my photos", "2025-12-26_05-05-00"), want: true},
+		{path: "sub/my photos-2025-12-26_05-05-00.mkv", want: true},
+		{path: "my photos-2025-12-26_05-05-00.mp4"},
+		{path: "my photos-holiday.mkv"},
+		{path: "other-2025-12-26_05-05-00.mkv"},
+		{path: "my photos.mkv"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			if got := IsPreviousOutput(tt.path, "my photos"); got != tt.want {
+				t.Errorf("IsPreviousOutput(%q) = %t, want %t", tt.path, got, tt.want)
+			}
+		})
+	}
+}
