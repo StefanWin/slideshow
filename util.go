@@ -6,9 +6,7 @@ import (
 )
 
 func GetTimestamp() string {
-	now := time.Now()
-
-	return fmt.Sprintf("%02d-%02d-%02d_%02d-%02d-%02d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+	return time.Now().Format("2006-01-02_15-04-05")
 }
 
 func ConvertDurationToTimestamp(d time.Duration) string {

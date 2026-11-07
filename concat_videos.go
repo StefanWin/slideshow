@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func ConcatVideos(videoFiles []string, outputPath string, options *SlideshowOptions) error {
@@ -23,9 +24,13 @@ func ConcatVideos(videoFiles []string, outputPath string, options *SlideshowOpti
 	}(tempList.Name())
 
 	for _, videoFile := range videoFiles {
-		absPath, _ := filepath.Abs(videoFile)
-		_, err := fmt.Fprintf(tempList, "file '%s'\n", absPath)
+		absPath, err := filepath.Abs(videoFile)
 		if err != nil {
+			return err
+		}
+		// the concat demuxer requires single quotes inside quoted paths to be escaped as '\''
+		escaped := strings.ReplaceAll(absPath, "'", `'\''`)
+		if _, err := fmt.Fprintf(tempList, "file '%s'\n", escaped); err != nil {
 			return err
 		}
 	}
